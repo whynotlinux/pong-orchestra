@@ -616,15 +616,15 @@ body.po {
 }
 
 /* Rows of images in a section (several images in one paragraph) */
-.po-section .po-prose p:has(> img + img),
-.po-section .po-prose p:has(> a > img):has(> a + a) {
+.po-prose p:has(> img + img),
+.po-prose p:has(> a > img):has(> a + a) {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(150px, 40vw), 1fr));
   gap: 12px;
 }
 
-.po-section .po-prose p:has(> img + img) img,
-.po-section .po-prose p:has(> a + a) img {
+.po-prose p:has(> img + img) img,
+.po-prose p:has(> a + a) img {
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
@@ -632,8 +632,8 @@ body.po {
   transition: filter 0.3s;
 }
 
-.po-section .po-prose p:has(> img + img) img:hover,
-.po-section .po-prose p:has(> a + a) img:hover {
+.po-prose p:has(> img + img) img:hover,
+.po-prose p:has(> a + a) img:hover {
   filter: none;
 }
 
@@ -1342,4 +1342,201 @@ body.po {
   font-size: 1rem;
   letter-spacing: 0.3em;
   color: var(--po-muted);
+}
+
+/* Gallery photos open in the lightbox (theme JS adds .po-gallery). */
+.po-gallery img {
+  cursor: zoom-in;
+}
+
+.po-gallery img:focus-visible {
+  outline: 3px solid var(--po-accent);
+  outline-offset: 2px;
+}
+
+/* Card grid: a list whose items start with a linked image
+   ([![…](image)](link) **Title**) — photo albums, Instagram posts. */
+.po-prose ul:has(> li > a:first-child > img) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 14px;
+  width: 100%;
+  margin: 0 0 1.3em;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.po-prose ul:has(> li > a:first-child > img) > li {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #000;
+}
+
+.po-prose ul.po-cards--square > li,
+.po-prose ul:has(> li > a[href*="instagram.com"]:first-child > img) > li {
+  aspect-ratio: 1;
+}
+
+.po-prose ul:has(> li > a:first-child > img) > li > a:first-child {
+  display: block;
+  height: 100%;
+  text-decoration: none;
+}
+
+.po-prose ul:has(> li > a:first-child > img) > li > a:first-child img {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  object-fit: cover;
+  filter: grayscale(0.35);
+  transition: transform 0.6s, filter 0.3s;
+}
+
+.po-prose ul:has(> li > a:first-child > img) > li:hover > a:first-child img {
+  transform: scale(1.06);
+  filter: none;
+}
+
+.po-prose ul:has(> li > a:first-child > img) > li > strong {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 48px 18px 16px;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.88));
+  font-family: var(--po-display);
+  font-weight: 500;
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.po-prose ul:has(> li > a:first-child > img) > li > strong::after {
+  content: "";
+  display: block;
+  width: 32px;
+  height: 2px;
+  margin-top: 10px;
+  background: var(--po-accent);
+  transition: width 0.3s;
+}
+
+.po-prose ul:has(> li > a:first-child > img) > li:hover > strong::after {
+  width: 64px;
+}
+
+/* Instagram captions: body text, not titles. */
+.po-prose ul:has(> li > a[href*="instagram.com"]:first-child > img) > li > strong {
+  font-family: var(--po-body);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 0.85rem;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.po-prose ul:has(> li > a[href*="instagram.com"]:first-child > img) > li:hover > strong {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .po-prose ul:has(> li > a[href*="instagram.com"]:first-child > img) > li > strong {
+    opacity: 1;
+  }
+}
+
+/* Album pages: wider body for the photo grid. */
+.po-article__body:has(.po-prose > p > img + img) {
+  max-width: 1180px;
+}
+
+/* Photo lightbox */
+.po-lightbox--photo img {
+  display: block;
+  max-width: min(1600px, 100%);
+  max-height: calc(100vh - 140px);
+  margin: 0 auto;
+  object-fit: contain;
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.8);
+}
+
+.po-lightbox__arrow {
+  position: absolute;
+  top: 50%;
+  width: 48px;
+  height: 48px;
+  margin-top: -24px;
+  padding: 0;
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  cursor: pointer;
+}
+
+.po-lightbox__arrow::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 11px;
+  height: 11px;
+  border-top: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+}
+
+.po-lightbox__arrow--prev {
+  left: 16px;
+}
+
+.po-lightbox__arrow--prev::before {
+  margin: -5px 0 0 -3px;
+  transform: rotate(-135deg);
+}
+
+.po-lightbox__arrow--next {
+  right: 16px;
+}
+
+.po-lightbox__arrow--next::before {
+  margin: -5px 0 0 -8px;
+  transform: rotate(45deg);
+}
+
+.po-lightbox__arrow:hover {
+  background: var(--po-accent);
+  border-color: var(--po-accent);
+}
+
+.po-lightbox__count {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 18px;
+  text-align: center;
+  font-family: var(--po-display);
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 560px) {
+  .po-lightbox__arrow {
+    top: auto;
+    bottom: 8px;
+    margin: 0;
+  }
+
+  .po-lightbox__arrow--prev {
+    left: calc(50% - 110px);
+  }
+
+  .po-lightbox__arrow--next {
+    right: calc(50% - 110px);
+  }
 }

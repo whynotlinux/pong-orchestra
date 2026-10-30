@@ -188,9 +188,97 @@
     });
   }
 
+  // ── Photo galleries (several images in one paragraph) ─────────────
+  var LANG = (document.documentElement.lang || "en").slice(0, 2);
+  var WORDS = LANG === "fr"
+    ? { close: "Fermer", prev: "Photo précédente", next: "Photo suivante", open: "Agrandir la photo" }
+    : { close: "Close", prev: "Previous photo", next: "Next photo", open: "Enlarge photo" };
+
+  // Uploaded media have a "full" (uncropped) variant next to "medium".
+  function fullUrl(src) {
+    return /\/(small|medium|large)\.webp(\?|$)/.test(src) ? src.replace(/\/(small|medium|large)\.webp/, "/full.webp") : src;
+  }
+
+  function openPhotos(imgs, start) {
+    var index = start;
+    var box = document.createElement("div");
+    box.className = "po-lightbox po-lightbox--photo";
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
+    box.innerHTML =
+      '<button type="button" class="po-lightbox__close"></button>' +
+      '<button type="button" class="po-lightbox__arrow po-lightbox__arrow--prev"></button>' +
+      '<img alt="" />' +
+      '<button type="button" class="po-lightbox__arrow po-lightbox__arrow--next"></button>' +
+      '<p class="po-lightbox__count" aria-live="polite"></p>';
+    var img = box.querySelector("img");
+    var count = box.querySelector(".po-lightbox__count");
+    var close = box.querySelector(".po-lightbox__close");
+    var prev = box.querySelector(".po-lightbox__arrow--prev");
+    var next = box.querySelector(".po-lightbox__arrow--next");
+    close.setAttribute("aria-label", WORDS.close);
+    prev.setAttribute("aria-label", WORDS.prev);
+    next.setAttribute("aria-label", WORDS.next);
+    function show(i) {
+      index = (i + imgs.length) % imgs.length;
+      var source = imgs[index];
+      img.onerror = function () { img.onerror = null; img.src = source.currentSrc || source.src; };
+      img.src = fullUrl(source.currentSrc || source.src);
+      img.alt = source.alt || "";
+      count.textContent = index + 1 + " / " + imgs.length;
+    }
+    var previous = document.activeElement;
+    function shut() {
+      document.removeEventListener("keydown", onKey);
+      box.remove();
+      document.documentElement.classList.remove("po-no-scroll");
+      if (previous && previous.focus) previous.focus();
+    }
+    function onKey(e) {
+      if (e.key === "Escape") shut();
+      else if (e.key === "ArrowLeft") show(index - 1);
+      else if (e.key === "ArrowRight") show(index + 1);
+    }
+    close.addEventListener("click", shut);
+    prev.addEventListener("click", function () { show(index - 1); });
+    next.addEventListener("click", function () { show(index + 1); });
+    box.addEventListener("click", function (e) { if (e.target === box) shut(); });
+    var startX = null;
+    box.addEventListener("pointerdown", function (e) { startX = e.clientX; });
+    box.addEventListener("pointerup", function (e) {
+      if (startX === null) return;
+      var dx = e.clientX - startX;
+      startX = null;
+      if (Math.abs(dx) > 50) show(index + (dx < 0 ? 1 : -1));
+    });
+    document.addEventListener("keydown", onKey);
+    document.body.appendChild(box);
+    document.documentElement.classList.add("po-no-scroll");
+    show(index);
+    close.focus();
+  }
+
+  function wireGalleries() {
+    Array.prototype.forEach.call(document.querySelectorAll(".po-prose p"), function (p) {
+      var imgs = Array.prototype.filter.call(p.children, function (el) { return el.tagName === "IMG"; });
+      if (imgs.length < 2) return;
+      p.classList.add("po-gallery");
+      imgs.forEach(function (im, i) {
+        im.setAttribute("tabindex", "0");
+        im.setAttribute("role", "button");
+        im.setAttribute("aria-label", (im.alt ? im.alt + " — " : "") + WORDS.open);
+        im.addEventListener("click", function () { openPhotos(imgs, i); });
+        im.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openPhotos(imgs, i); }
+        });
+      });
+    });
+  }
+
   function start() {
     wireBurger();
     wireVideos();
+    wireGalleries();
     fetch(withBase("/data/menu.json"), { credentials: "omit" })
       .then(function (res) {
         if (!res.ok) throw new Error("HTTP " + res.status);
