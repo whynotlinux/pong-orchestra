@@ -1029,6 +1029,15 @@ body.po {
     grid-column: 1 / -1;
   }
 }
+
+/* Spotify player: the full-size player (track list), like the official embed code. */
+.po-prose .cms-embed-spotify {
+  height: 352px;
+  margin: 2rem auto 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: transparent;
+}
 `, J = `// PONG Orchestra — runtime menu loader, uploaded as theme-assets/pong-orchestra-menu.js.
 // Refreshes [data-cms-menu="header|footer"] from data/menu.json (the
 // admin rewrites it whenever menus, posts or categories change) and
@@ -1272,7 +1281,7 @@ function tn({ post: e }) {
     ] })
   ] });
 }
-function L({ posts: e, site: o }) {
+function S({ posts: e, site: o }) {
   return e.length === 0 ? /* @__PURE__ */ n("p", { className: "po-empty", children: x(o)("empty") }) : /* @__PURE__ */ n("div", { className: "po-grid", children: e.map((t) => /* @__PURE__ */ n(tn, { post: t }, t.id)) });
 }
 function T(e) {
@@ -1314,7 +1323,7 @@ function ln({ site: e, posts: o, staticPage: t, archivesLink: a }) {
       ] })
     ] }, p.id ?? h)) : /* @__PURE__ */ n("section", { className: "po-section", children: /* @__PURE__ */ i("div", { className: "po-container po-section__inner", children: [
       /* @__PURE__ */ n("h2", { className: "po-section__title", children: c("news") }),
-      /* @__PURE__ */ n(L, { posts: o, site: e }),
+      /* @__PURE__ */ n(S, { posts: o, site: e }),
       a && /* @__PURE__ */ n("p", { className: "po-more", children: /* @__PURE__ */ n("a", { className: "po-button", href: a.href, children: a.label }) })
     ] }) }) })
   ] });
@@ -1367,7 +1376,7 @@ function cn({ site: e, term: o, posts: t, archivesLink: a }) {
   return /* @__PURE__ */ i(y, { children: [
     /* @__PURE__ */ n(_, { title: o.name, children: o.description && /* @__PURE__ */ n("p", { className: "po-lead", children: o.description }) }),
     /* @__PURE__ */ i("div", { className: "po-container po-listing", children: [
-      /* @__PURE__ */ n(L, { posts: t, site: e }),
+      /* @__PURE__ */ n(S, { posts: t, site: e }),
       a && /* @__PURE__ */ n("p", { className: "po-more", children: /* @__PURE__ */ n("a", { className: "po-button", href: a.href, children: a.label }) })
     ] })
   ] });
@@ -1380,7 +1389,7 @@ function dn({ site: e, author: o, posts: t }) {
       o.bio && /* @__PURE__ */ n("p", { className: "po-lead", children: o.bio }),
       o.socials && o.socials.length > 0 && /* @__PURE__ */ n("ul", { className: "po-author-links", children: o.socials.map((r) => /* @__PURE__ */ n("li", { children: /* @__PURE__ */ n("a", { href: r.url, rel: "me noopener", children: r.network }) }, r.network)) })
     ] }),
-    /* @__PURE__ */ n("div", { className: "po-container po-listing", children: /* @__PURE__ */ n(L, { posts: t, site: e }) })
+    /* @__PURE__ */ n("div", { className: "po-container po-listing", children: /* @__PURE__ */ n(S, { posts: t, site: e }) })
   ] });
 }
 function mn({ site: e, message: o }) {
@@ -1414,8 +1423,8 @@ function hn({ config: e, save: o }) {
     } finally {
       l(!1);
     }
-    const S = { ...a, logoEnabled: !0, logoUpdatedAt: Date.now() };
-    r(S), await p(S);
+    const L = { ...a, logoEnabled: !0, logoUpdatedAt: Date.now() };
+    r(L), await p(L);
   }
   async function F() {
     l(!0);
@@ -1499,7 +1508,7 @@ const gn = {
 }, vn = {
   id: "pong-orchestra",
   name: "PONG Orchestra",
-  version: "1.0.1",
+  version: "1.0.2",
   description: "Thème sombre type fanfare rock, inspiré de pongorchestra.fr",
   readme: K,
   scssEntry: "theme.css",
