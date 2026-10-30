@@ -1,8 +1,8 @@
-import { jsx as n, jsxs as i, Fragment as y } from "react/jsx-runtime";
-import { i18n as H, pickPublicLocale as P, logoPath as R, canonicalUrl as B, pickFormat as k, postSortMillis as $, buildTermUrl as U, MediaPicker as I, pickMediaUrl as j, uploadThemeLogo as q, removeThemeLogo as G, toast as D } from "@agent-cms/runtime";
-import { useState as w, useEffect as Y } from "react";
-import { useTranslation as V } from "react-i18next";
-const C = `@import url("https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Roboto:wght@100;300;400;500&display=swap");
+import { jsx as n, jsxs as i, Fragment as w } from "react/jsx-runtime";
+import { i18n as R, pickPublicLocale as B, logoPath as F, canonicalUrl as U, pickFormat as L, postSortMillis as I, buildTermUrl as q, MediaPicker as D, pickMediaUrl as G, uploadThemeLogo as V, removeThemeLogo as Y, toast as K } from "@agent-cms/runtime";
+import { useState as N, useEffect as X } from "react";
+import { useTranslation as W } from "react-i18next";
+const T = `@import url("https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Roboto:wght@100;300;400;500&display=swap");
 
 /* PONG Orchestra — black stage, thin spaced capitals, red duotone photos. */
 :root {
@@ -1003,32 +1003,11 @@ body.po {
   text-decoration-thickness: 3px;
 }
 
-/* Several videos in a section: the first one large, the others two by two. */
-.po-section .po-prose:has(> .cms-embed + .cms-embed) {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.po-section .po-prose:has(> .cms-embed + .cms-embed) > * {
-  grid-column: 1 / -1;
-  margin: 0;
-}
-
-.po-section .po-prose:has(> .cms-embed + .cms-embed) > .cms-embed ~ .cms-embed {
-  grid-column: auto;
-}
-
 .po-prose .cms-embed {
   background: #000;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
-@media (max-width: 640px) {
-  .po-section .po-prose:has(> .cms-embed + .cms-embed) > .cms-embed ~ .cms-embed {
-    grid-column: 1 / -1;
-  }
-}
 
 /* Spotify player: tall player with the track list. */
 .po-prose .cms-embed-spotify {
@@ -1044,7 +1023,293 @@ body.po {
     height: 420px;
   }
 }
-`, J = `// PONG Orchestra — runtime menu loader, uploaded as theme-assets/pong-orchestra-menu.js.
+
+/* ---------- Video slider ---------- */
+.po-slider {
+  --po-slide: calc((100% - 40px) / 3);
+  position: relative;
+  margin: 0 auto;
+  padding: 0 56px 48px;
+  max-width: 1100px;
+}
+
+.po-section__inner:has(.po-slider) {
+  max-width: 1180px;
+}
+
+.po-slider__viewport {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+}
+
+.po-slider.is-ready .po-slider__viewport {
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.po-slider__track {
+  display: flex;
+  gap: 20px;
+  will-change: transform;
+}
+
+.po-slider__slide {
+  flex: 0 0 var(--po-slide);
+  scroll-snap-align: center;
+  transition: opacity 0.4s, transform 0.4s;
+}
+
+.po-slider.is-ready .po-slider__slide {
+  opacity: 0.45;
+  transform: scale(0.9);
+}
+
+.po-slider.is-ready .po-slider__slide.is-active {
+  opacity: 1;
+  transform: none;
+}
+
+.po-video {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  -webkit-user-drag: none;
+}
+
+.po .po-video img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  object-fit: cover;
+  transition: transform 0.5s, filter 0.3s;
+  filter: grayscale(0.3);
+  pointer-events: none;
+}
+
+.po-video:hover img {
+  transform: scale(1.05);
+  filter: none;
+}
+
+.po-video__play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 68px;
+  height: 68px;
+  margin: -34px 0 0 -34px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--po-accent) 85%, transparent);
+  transition: transform 0.25s, background 0.25s;
+}
+
+.po-video__play::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: -11px 0 0 -6px;
+  border-style: solid;
+  border-width: 11px 0 11px 18px;
+  border-color: transparent transparent transparent #fff;
+}
+
+.po-video:hover .po-video__play {
+  transform: scale(1.1);
+  background: var(--po-accent);
+}
+
+.po-slider__arrow {
+  display: none;
+  position: absolute;
+  top: calc(50% - 24px);
+  width: 44px;
+  height: 44px;
+  margin-top: -22px;
+  padding: 0;
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.po-slider.is-ready .po-slider__arrow {
+  display: block;
+}
+
+.po-slider__arrow::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-top: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+}
+
+.po-slider__arrow--prev {
+  left: 0;
+}
+
+.po-slider__arrow--prev::before {
+  margin: -5px 0 0 -3px;
+  transform: rotate(-135deg);
+}
+
+.po-slider__arrow--next {
+  right: 0;
+}
+
+.po-slider__arrow--next::before {
+  margin: -5px 0 0 -7px;
+  transform: rotate(45deg);
+}
+
+.po-slider__arrow:hover {
+  background: var(--po-accent);
+  border-color: var(--po-accent);
+}
+
+.po-slider__dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.po-slider__dot {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.po-slider__dot[aria-current="true"] {
+  background: var(--po-accent);
+  transform: scale(1.25);
+}
+
+@media (max-width: 900px) {
+  .po-slider {
+    --po-slide: 62%;
+  }
+}
+
+@media (max-width: 560px) {
+  .po-slider {
+    --po-slide: 84%;
+    padding: 0 0 72px;
+  }
+
+  .po-slider__arrow {
+    top: auto;
+    bottom: 0;
+    margin: 0;
+  }
+
+  .po-slider__arrow--prev {
+    left: calc(50% - 110px);
+  }
+
+  .po-slider__arrow--next {
+    right: calc(50% - 110px);
+  }
+
+  .po-slider__dots {
+    bottom: 17px;
+  }
+
+  .po-video__play {
+    width: 56px;
+    height: 56px;
+    margin: -28px 0 0 -28px;
+  }
+}
+
+/* ---------- Video lightbox ---------- */
+.po-no-scroll {
+  overflow: hidden;
+}
+
+.po-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 64px 16px;
+  background: rgba(0, 0, 0, 0.92);
+  animation: po-fade 0.25s ease both;
+}
+
+.po-lightbox__frame {
+  width: min(1100px, 100%, calc((100vh - 128px) * 16 / 9));
+  aspect-ratio: 16 / 9;
+  background: #000;
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.8);
+}
+
+.po-lightbox__frame iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.po-lightbox__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+.po-lightbox__close::before,
+.po-lightbox__close::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  right: 10px;
+  height: 2px;
+  background: currentColor;
+  transform: rotate(45deg);
+}
+
+.po-lightbox__close::after {
+  transform: rotate(-45deg);
+}
+
+.po-lightbox__close:hover {
+  color: var(--po-accent);
+}
+
+@keyframes po-fade {
+  from {
+    opacity: 0;
+  }
+}
+`, Z = `// PONG Orchestra — runtime menu loader, uploaded as theme-assets/pong-orchestra-menu.js.
 // Refreshes [data-cms-menu="header|footer"] from data/menu.json (the
 // admin rewrites it whenever menus, posts or categories change) and
 // wires the mobile burger. Fails silently: the statically rendered
@@ -1106,8 +1371,137 @@ body.po {
     });
   }
 
+
+  // ── Video slider (centered, looping) ──────────────────────────────
+  // Slides are cloned on both sides so the loop never shows an edge;
+  // after each move onto a clone, the track jumps back to the real slide.
+  function initSlider(root) {
+    var viewport = root.querySelector(".po-slider__viewport");
+    var track = root.querySelector(".po-slider__track");
+    var dotsHost = root.querySelector("[data-po-dots]");
+    var originals = Array.prototype.slice.call(track.children);
+    var n = originals.length;
+    if (n < 2) return;
+    function cloneOf(slide) {
+      var c = slide.cloneNode(true);
+      c.setAttribute("aria-hidden", "true");
+      c.classList.add("is-clone");
+      Array.prototype.forEach.call(c.querySelectorAll("a"), function (a) { a.setAttribute("tabindex", "-1"); });
+      return c;
+    }
+    originals.forEach(function (s) { track.appendChild(cloneOf(s)); });
+    originals.slice().reverse().forEach(function (s) { track.insertBefore(cloneOf(s), track.firstChild); });
+    var all = track.children;
+    var index = n;
+    var dots = [];
+    for (var k = 0; k < n; k++) {
+      var dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "po-slider__dot";
+      dot.setAttribute("aria-label", String(k + 1) + " / " + n);
+      dot.addEventListener("click", (function (target) { return function () { go(n + target, true); }; })(k));
+      dotsHost.appendChild(dot);
+      dots.push(dot);
+    }
+    function go(i, animate) {
+      index = i;
+      var slide = all[i];
+      var offset = slide.offsetLeft - (viewport.clientWidth - slide.offsetWidth) / 2;
+      track.style.transition = animate ? "transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1)" : "none";
+      track.style.transform = "translate3d(" + -offset + "px,0,0)";
+      for (var j = 0; j < all.length; j++) all[j].classList.toggle("is-active", j === i);
+      var real = ((i - n) % n + n) % n;
+      dots.forEach(function (d, j) { d.setAttribute("aria-current", j === real ? "true" : "false"); });
+      if (!animate) settle();
+    }
+    function settle() {
+      if (index >= 2 * n) go(index - n, false);
+      else if (index < n) go(index + n, false);
+    }
+    track.addEventListener("transitionend", function (e) { if (e.target === track) settle(); });
+    root.querySelector("[data-po-prev]").addEventListener("click", function () { go(index - 1, true); });
+    root.querySelector("[data-po-next]").addEventListener("click", function () { go(index + 1, true); });
+    root.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowLeft") go(index - 1, true);
+      else if (e.key === "ArrowRight") go(index + 1, true);
+    });
+    // Swipe / drag; a real drag cancels the click on the thumbnail.
+    var startX = null, dragged = false;
+    viewport.addEventListener("pointerdown", function (e) { startX = e.clientX; dragged = false; });
+    viewport.addEventListener("pointerup", function (e) {
+      if (startX === null) return;
+      var dx = e.clientX - startX;
+      startX = null;
+      if (Math.abs(dx) > 40) { dragged = true; go(index + (dx < 0 ? 1 : -1), true); }
+    });
+    viewport.addEventListener("click", function (e) { if (dragged) { e.preventDefault(); e.stopPropagation(); dragged = false; } }, true);
+    // Clicking a side slide brings it to the center first.
+    track.addEventListener("click", function (e) {
+      var slide = e.target.closest && e.target.closest(".po-slider__slide");
+      if (!slide || slide.classList.contains("is-active")) return;
+      e.preventDefault();
+      e.stopPropagation();
+      go(Array.prototype.indexOf.call(all, slide), true);
+    }, true);
+    var resizeTimer;
+    window.addEventListener("resize", function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () { go(index, false); }, 120);
+    });
+    root.classList.add("is-ready");
+    go(index, false);
+  }
+
+  // ── Video lightbox ────────────────────────────────────────────────
+  function openVideo(id, label) {
+    var box = document.createElement("div");
+    box.className = "po-lightbox";
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
+    var close = document.createElement("button");
+    close.type = "button";
+    close.className = "po-lightbox__close";
+    close.setAttribute("aria-label", label || "Close");
+    var frame = document.createElement("div");
+    frame.className = "po-lightbox__frame";
+    var iframe = document.createElement("iframe");
+    iframe.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(id) + "?autoplay=1&rel=0";
+    iframe.title = "YouTube";
+    iframe.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture; fullscreen");
+    iframe.setAttribute("allowfullscreen", "");
+    frame.appendChild(iframe);
+    box.appendChild(close);
+    box.appendChild(frame);
+    var previous = document.activeElement;
+    function shut() {
+      document.removeEventListener("keydown", onKey);
+      box.remove();
+      document.documentElement.classList.remove("po-no-scroll");
+      if (previous && previous.focus) previous.focus();
+    }
+    function onKey(e) { if (e.key === "Escape") shut(); }
+    close.addEventListener("click", shut);
+    box.addEventListener("click", function (e) { if (e.target === box) shut(); });
+    document.addEventListener("keydown", onKey);
+    document.body.appendChild(box);
+    document.documentElement.classList.add("po-no-scroll");
+    close.focus();
+  }
+
+  function wireVideos() {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-po-slider]"), initSlider);
+    document.addEventListener("click", function (e) {
+      var link = e.target.closest && e.target.closest("[data-po-video]");
+      if (!link || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      e.preventDefault();
+      var slider = link.closest("[data-po-slider]");
+      openVideo(link.getAttribute("data-po-video"), slider && slider.getAttribute("data-label-close"));
+    });
+  }
+
   function start() {
     wireBurger();
+    wireVideos();
     fetch(withBase("/data/menu.json"), { credentials: "omit" })
       .then(function (res) {
         if (!res.ok) throw new Error("HTTP " + res.status);
@@ -1120,7 +1514,7 @@ body.po {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
   else start();
 })();
-`, K = `# PONG Orchestra
+`, J = `# PONG Orchestra
 
 Thème sombre type fanfare rock, inspiré de pongorchestra.fr
 
@@ -1138,11 +1532,11 @@ npm run serve     # serve the demo site on http://localhost:4321/
 
 Bump \`version\` in \`manifest.json\`, \`src/manifest.tsx\` and \`package.json\` for each release: installing a newer ZIP upgrades the theme in place.
 `;
-function x(e, o) {
-  const t = H.getFixedT(P(o || e.settings.language || "en"), "theme-pong-orchestra");
+function v(e, o) {
+  const t = R.getFixedT(B(o || e.settings.language || "en"), "theme-pong-orchestra");
   return (a) => t(`public.${a}`);
 }
-const M = ["instagram", "facebook", "spotify", "deezer", "youtube", "apple"], u = {
+const j = ["instagram", "facebook", "spotify", "deezer", "youtube", "apple"], b = {
   colors: { accent: "#d7141a", background: "#050505", text: "#f1f1f1" },
   hero: { image: "", tagline: "Brass Band" },
   logoEnabled: !1,
@@ -1150,18 +1544,18 @@ const M = ["instagram", "facebook", "spotify", "deezer", "youtube", "apple"], u 
   socials: { instagram: "", facebook: "", spotify: "", deezer: "", youtube: "", apple: "" },
   footer: { credit: "" }
 };
-function b(e) {
+function x(e) {
   const o = e ?? {};
   return {
-    colors: { ...u.colors, ...o.colors ?? {} },
-    hero: { ...u.hero, ...o.hero ?? {} },
+    colors: { ...b.colors, ...o.colors ?? {} },
+    hero: { ...b.hero, ...o.hero ?? {} },
     logoEnabled: o.logoEnabled === !0,
     logoUpdatedAt: typeof o.logoUpdatedAt == "number" ? o.logoUpdatedAt : 0,
-    socials: { ...u.socials, ...o.socials ?? {} },
-    footer: { ...u.footer, ...o.footer ?? {} }
+    socials: { ...b.socials, ...o.socials ?? {} },
+    footer: { ...b.footer, ...o.footer ?? {} }
   };
 }
-const W = {
+const Q = {
   "colors.accent": { description: "Accent color: underlines, buttons, the duotone tint of photo sections.", format: "hex color" },
   "colors.background": { description: "Page background (keep it dark).", format: "hex color" },
   "colors.text": { description: "Body text.", format: "hex color" },
@@ -1177,22 +1571,22 @@ const W = {
   "socials.apple": { description: "Apple Music artist URL (empty = hidden)." },
   "footer.credit": { description: "Optional extra line in the footer, e.g. 'Réalisation : …'." }
 };
-function Z(e, o) {
-  const t = { ...u.colors, ...(o == null ? void 0 : o.colors) ?? {} };
-  if (Object.keys(t).every((c) => t[c] === u.colors[c])) return e;
-  const r = (c) => /^#[0-9a-f]{3,8}$/i.test(c) ? c : "inherit";
+function nn(e, o) {
+  const t = { ...b.colors, ...(o == null ? void 0 : o.colors) ?? {} };
+  if (Object.keys(t).every((p) => t[p] === b.colors[p])) return e;
+  const r = (p) => /^#[0-9a-f]{3,8}$/i.test(p) ? p : "inherit";
   return `${e}
 :root{--po-accent:${r(t.accent)};--po-bg:${r(t.background)};--po-text:${r(t.text)}}
 `;
 }
-const Q = {
+const en = {
   instagram: "M12 2.2c3.2 0 3.6 0 4.8.1 3.3.1 4.8 1.7 4.9 4.9.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 3.2-1.7 4.8-4.9 4.9-1.3.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-3.3-.1-4.8-1.7-4.9-4.9C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8C2.4 3.9 3.9 2.4 7.2 2.3 8.4 2.2 8.8 2.2 12 2.2zM12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8.2a3.2 3.2 0 1 1 0-6.4 3.2 3.2 0 0 1 0 6.4zm5.2-9.6a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4z",
   facebook: "M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.3v7A10 10 0 0 0 22 12z",
   spotify: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.6 14.4a.6.6 0 0 1-.9.2c-2.4-1.4-5.3-1.8-8.8-1a.6.6 0 1 1-.3-1.2c3.8-.9 7-.5 9.7 1.1.3.2.4.6.3.9zm1.2-2.7a.8.8 0 0 1-1.1.3c-2.7-1.7-6.9-2.2-10.1-1.2a.8.8 0 1 1-.5-1.5c3.7-1.1 8.3-.6 11.4 1.3.4.2.5.7.3 1.1zm.1-2.8C14.7 9 9.4 8.8 6.3 9.7a1 1 0 1 1-.6-1.8c3.5-1.1 9.4-.9 13.1 1.3a1 1 0 0 1-.9 1.7z",
   deezer: "M18.8 5.6h4.2V8h-4.2zM18.8 9.1h4.2v2.4h-4.2zM12.9 9.1h4.2v2.4h-4.2zM18.8 12.6h4.2V15h-4.2zM12.9 12.6h4.2V15h-4.2zM7 12.6h4.2V15H7zM18.8 16.1h4.2v2.4h-4.2zM12.9 16.1h4.2v2.4h-4.2zM7 16.1h4.2v2.4H7zM1 16.1h4.2v2.4H1z",
   youtube: "M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2C.5 9.1.5 12 .5 12s0 2.9.5 4.8a3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1c.5-1.9.5-4.8.5-4.8s0-2.9-.5-4.8zM9.7 15.5v-7l6 3.5-6 3.5z",
   apple: "M16.4 12.6c0-2.6 2.1-3.8 2.2-3.9a4.8 4.8 0 0 0-3.8-2c-1.6-.2-3.1.9-3.9.9-.8 0-2-.9-3.4-.9a5 5 0 0 0-4.2 2.6c-1.8 3.1-.5 7.7 1.3 10.2.8 1.2 1.8 2.6 3.1 2.6s1.7-.8 3.2-.8 1.9.8 3.2.8c1.3 0 2.2-1.2 3-2.4a10 10 0 0 0 1.4-2.8 4.3 4.3 0 0 1-2.1-4.3zM13.9 5.1A4.4 4.4 0 0 0 15 1.9a4.5 4.5 0 0 0-2.9 1.5 4.2 4.2 0 0 0-1.1 3.1c1.1.1 2.2-.6 2.9-1.4z"
-}, N = {
+}, z = {
   instagram: "Instagram",
   facebook: "Facebook",
   spotify: "Spotify",
@@ -1200,45 +1594,45 @@ const Q = {
   youtube: "YouTube",
   apple: "Apple Music"
 };
-function X({ network: e, size: o = 16 }) {
-  return /* @__PURE__ */ n("svg", { viewBox: "0 0 24 24", width: o, height: o, "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ n("path", { fill: "currentColor", d: Q[e] }) });
+function on({ network: e, size: o = 16 }) {
+  return /* @__PURE__ */ n("svg", { viewBox: "0 0 24 24", width: o, height: o, "aria-hidden": "true", focusable: "false", children: /* @__PURE__ */ n("path", { fill: "currentColor", d: en[e] }) });
 }
-function E({ socials: e, size: o, className: t }) {
-  const a = M.filter((r) => e[r]);
-  return a.length === 0 ? null : /* @__PURE__ */ n("ul", { className: `po-socials ${t ?? ""}`, children: a.map((r) => /* @__PURE__ */ n("li", { children: /* @__PURE__ */ n("a", { href: e[r], rel: "noopener", target: "_blank", "aria-label": N[r], title: N[r], children: /* @__PURE__ */ n(X, { network: r, size: o }) }) }, r)) });
+function O({ socials: e, size: o, className: t }) {
+  const a = j.filter((r) => e[r]);
+  return a.length === 0 ? null : /* @__PURE__ */ n("ul", { className: `po-socials ${t ?? ""}`, children: a.map((r) => /* @__PURE__ */ n("li", { children: /* @__PURE__ */ n("a", { href: e[r], rel: "noopener", target: "_blank", "aria-label": z[r], title: z[r], children: /* @__PURE__ */ n(on, { network: r, size: o }) }) }, r)) });
 }
-function O({ site: e, className: o }) {
-  const { logoEnabled: t, logoUpdatedAt: a } = b(e.themeConfig), r = e.settings.title || "";
-  return t ? /* @__PURE__ */ n("img", { className: `${o} ${o}--img`, src: `/${R("pong-orchestra")}?v=${a}`, alt: r }) : /* @__PURE__ */ n("span", { className: `${o} ${o}--text`, children: r });
+function P({ site: e, className: o }) {
+  const { logoEnabled: t, logoUpdatedAt: a } = x(e.themeConfig), r = e.settings.title || "";
+  return t ? /* @__PURE__ */ n("img", { className: `${o} ${o}--img`, src: `/${F("pong-orchestra")}?v=${a}`, alt: r }) : /* @__PURE__ */ n("span", { className: `${o} ${o}--text`, children: r });
 }
-function z({ items: e, currentPath: o }) {
+function A({ items: e, currentPath: o }) {
   return /* @__PURE__ */ n("ul", { children: e.map((t) => {
     const a = o !== void 0 && t.href === `/${o}`;
     return /* @__PURE__ */ i("li", { children: [
       /* @__PURE__ */ n("a", { href: t.href, "aria-current": a ? "page" : void 0, children: t.label }),
-      t.children && t.children.length > 0 && /* @__PURE__ */ n(z, { items: t.children, currentPath: o })
+      t.children && t.children.length > 0 && /* @__PURE__ */ n(A, { items: t.children, currentPath: o })
     ] }, t.id);
   }) });
 }
-function nn({ site: e, currentPath: o, locale: t }) {
-  const a = x(e, t), r = b(e.themeConfig);
+function tn({ site: e, currentPath: o, locale: t }) {
+  const a = v(e, t), r = x(e.themeConfig);
   return /* @__PURE__ */ n("header", { className: "po-header", children: /* @__PURE__ */ i("div", { className: "po-header__inner", children: [
-    /* @__PURE__ */ n("div", { className: "po-header__left", children: /* @__PURE__ */ n(E, { socials: r.socials, size: 15 }) }),
-    /* @__PURE__ */ n("a", { className: "po-header__brand", href: e.homePath ?? "/index.html", children: /* @__PURE__ */ n(O, { site: e, className: "po-brand" }) }),
+    /* @__PURE__ */ n("div", { className: "po-header__left", children: /* @__PURE__ */ n(O, { socials: r.socials, size: 15 }) }),
+    /* @__PURE__ */ n("a", { className: "po-header__brand", href: e.homePath ?? "/index.html", children: /* @__PURE__ */ n(P, { site: e, className: "po-brand" }) }),
     /* @__PURE__ */ i("div", { className: "po-header__right", children: [
       /* @__PURE__ */ i("button", { className: "po-burger", type: "button", "aria-expanded": "false", "aria-controls": "po-nav", "data-po-burger": !0, children: [
         /* @__PURE__ */ n("span", { className: "po-sr-only", children: a("menu") }),
         /* @__PURE__ */ n("span", { className: "po-burger__bars", "aria-hidden": "true" })
       ] }),
-      /* @__PURE__ */ n("nav", { id: "po-nav", className: "po-nav", "aria-label": a("mainNav"), "data-cms-menu": "header", children: /* @__PURE__ */ n(z, { items: e.resolvedMenus.header, currentPath: o }) })
+      /* @__PURE__ */ n("nav", { id: "po-nav", className: "po-nav", "aria-label": a("mainNav"), "data-cms-menu": "header", children: /* @__PURE__ */ n(A, { items: e.resolvedMenus.header, currentPath: o }) })
     ] })
   ] }) });
 }
-function en({ site: e, locale: o }) {
-  const t = x(e, o), a = b(e.themeConfig);
+function an({ site: e, locale: o }) {
+  const t = v(e, o), a = x(e.themeConfig);
   return /* @__PURE__ */ n("footer", { className: "po-footer", children: /* @__PURE__ */ i("div", { className: "po-container po-footer__inner", children: [
-    /* @__PURE__ */ n(E, { socials: a.socials, size: 18 }),
-    /* @__PURE__ */ n("nav", { "aria-label": t("footerNav"), "data-cms-menu": "footer", className: "po-footer__nav", children: /* @__PURE__ */ n(z, { items: e.resolvedMenus.footer }) }),
+    /* @__PURE__ */ n(O, { socials: a.socials, size: 18 }),
+    /* @__PURE__ */ n("nav", { "aria-label": t("footerNav"), "data-cms-menu": "footer", className: "po-footer__nav", children: /* @__PURE__ */ n(A, { items: e.resolvedMenus.footer }) }),
     /* @__PURE__ */ i("p", { className: "po-footer__legal", children: [
       "© ",
       (/* @__PURE__ */ new Date()).getFullYear(),
@@ -1250,33 +1644,33 @@ function en({ site: e, locale: o }) {
     a.footer.credit && /* @__PURE__ */ n("p", { className: "po-footer__credit", children: a.footer.credit })
   ] }) });
 }
-function on({ site: e, pageTitle: o, pageDescription: t, ogImage: a, currentPath: r, currentLocale: c, children: l }) {
-  const d = c || e.settings.language || "en", m = e.settings.title || "", p = o ? o.includes(m) ? o : `${o} — ${m}` : m, h = e.settings.baseUrl && r ? B(e.settings.baseUrl, r) : void 0;
-  return /* @__PURE__ */ i("html", { lang: d, children: [
+function rn({ site: e, pageTitle: o, pageDescription: t, ogImage: a, currentPath: r, currentLocale: p, children: s }) {
+  const c = p || e.settings.language || "en", m = e.settings.title || "", h = o ? o.includes(m) ? o : `${o} — ${m}` : m, d = e.settings.baseUrl && r ? U(e.settings.baseUrl, r) : void 0;
+  return /* @__PURE__ */ i("html", { lang: c, children: [
     /* @__PURE__ */ i("head", { children: [
       /* @__PURE__ */ n("meta", { charSet: "utf-8" }),
       /* @__PURE__ */ n("meta", { name: "viewport", content: "width=device-width, initial-scale=1" }),
-      /* @__PURE__ */ n("title", { children: p }),
+      /* @__PURE__ */ n("title", { children: h }),
       t && /* @__PURE__ */ n("meta", { name: "description", content: t }),
-      h && /* @__PURE__ */ n("link", { rel: "canonical", href: h }),
-      /* @__PURE__ */ n("meta", { property: "og:title", content: p }),
+      d && /* @__PURE__ */ n("link", { rel: "canonical", href: d }),
+      /* @__PURE__ */ n("meta", { property: "og:title", content: h }),
       t && /* @__PURE__ */ n("meta", { property: "og:description", content: t }),
       a && /* @__PURE__ */ n("meta", { property: "og:image", content: a }),
-      h && /* @__PURE__ */ n("meta", { property: "og:url", content: h }),
+      d && /* @__PURE__ */ n("meta", { property: "og:url", content: d }),
       /* @__PURE__ */ n("link", { rel: "stylesheet", href: `/${e.themeCssPath}` }),
       /* @__PURE__ */ n("script", { src: "/theme-assets/pong-orchestra-menu.js", defer: !0 }),
       /* @__PURE__ */ n("meta", { name: "x-cms-head-extra" })
     ] }),
     /* @__PURE__ */ i("body", { className: "po", children: [
-      /* @__PURE__ */ n(nn, { site: e, currentPath: r, locale: d }),
-      /* @__PURE__ */ n("main", { className: "po-main", children: l }),
-      /* @__PURE__ */ n(en, { site: e, locale: d }),
+      /* @__PURE__ */ n(tn, { site: e, currentPath: r, locale: c }),
+      /* @__PURE__ */ n("main", { className: "po-main", children: s }),
+      /* @__PURE__ */ n(an, { site: e, locale: c }),
       /* @__PURE__ */ n("script", { type: "application/x-cms-body-end" })
     ] })
   ] });
 }
-function tn({ post: e }) {
-  const o = k(e.hero, "medium");
+function sn({ post: e }) {
+  const o = L(e.hero, "medium");
   return /* @__PURE__ */ i("article", { className: "po-card", children: [
     /* @__PURE__ */ n("a", { href: `/${e.url}`, className: "po-card__media", tabIndex: -1, "aria-hidden": "true", children: o ? /* @__PURE__ */ n("img", { src: o, alt: "", loading: "lazy" }) : /* @__PURE__ */ n("span", { className: "po-card__placeholder" }) }),
     /* @__PURE__ */ i("div", { className: "po-card__body", children: [
@@ -1287,54 +1681,64 @@ function tn({ post: e }) {
     ] })
   ] });
 }
-function S({ posts: e, site: o }) {
-  return e.length === 0 ? /* @__PURE__ */ n("p", { className: "po-empty", children: x(o)("empty") }) : /* @__PURE__ */ n("div", { className: "po-grid", children: e.map((t) => /* @__PURE__ */ n(tn, { post: t }, t.id)) });
+function E({ posts: e, site: o }) {
+  return e.length === 0 ? /* @__PURE__ */ n("p", { className: "po-empty", children: v(o)("empty") }) : /* @__PURE__ */ n("div", { className: "po-grid", children: e.map((t) => /* @__PURE__ */ n(sn, { post: t }, t.id)) });
 }
-function T(e) {
+function M(e) {
   return e.replace(/<[^>]+>/g, "").replace(/&[a-z#0-9]+;/gi, " ").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
-const an = /<h2\b[^>]*>([\s\S]*?)<\/h2>/gi, rn = /^\s*<p>\s*(?:<a\b[^>]*>\s*)?(<img\b[^>]*>)\s*(?:<\/a>\s*)?<\/p>/i;
-function sn(e) {
+const ln = /<h2\b[^>]*>([\s\S]*?)<\/h2>/gi, pn = /^\s*<p>\s*(?:<a\b[^>]*>\s*)?(<img\b[^>]*>)\s*(?:<\/a>\s*)?<\/p>/i;
+function cn(e) {
   const o = [], t = /* @__PURE__ */ new Set();
   let a = 0, r = { html: "" };
-  const c = (l) => {
-    const d = rn.exec(l);
-    d && (r.background = d[1], l = l.slice(d[0].length)), r.html = l.trim(), (r.heading || r.html || r.background) && o.push(r);
+  const p = (s) => {
+    const c = pn.exec(s);
+    c && (r.background = c[1], s = s.slice(c[0].length)), r.html = s.trim(), (r.heading || r.html || r.background) && o.push(r);
   };
-  for (const l of e.matchAll(an)) {
-    c(e.slice(a, l.index));
-    let d = T(l[1]) || "section";
-    for (let m = 2; t.has(d); m++) d = `${T(l[1]) || "section"}-${m}`;
-    t.add(d), r = { id: d, heading: l[1], html: "" }, a = (l.index ?? 0) + l[0].length;
+  for (const s of e.matchAll(ln)) {
+    p(e.slice(a, s.index));
+    let c = M(s[1]) || "section";
+    for (let m = 2; t.has(c); m++) c = `${M(s[1]) || "section"}-${m}`;
+    t.add(c), r = { id: c, heading: s[1], html: "" }, a = (s.index ?? 0) + s[0].length;
   }
-  return c(e.slice(a)), o;
+  return p(e.slice(a)), o;
 }
-function ln({ site: e, posts: o, staticPage: t, archivesLink: a }) {
-  var m;
-  const r = b(e.themeConfig), c = x(e), l = t ? sn(t.bodyHtml) : [], d = (m = l.find((p) => p.id)) == null ? void 0 : m.id;
-  return /* @__PURE__ */ i(y, { children: [
+const $ = /<div class="cms-embed cms-embed-youtube">\s*<iframe\b[^>]*\bsrc="https:\/\/www\.youtube(?:-nocookie)?\.com\/embed\/([A-Za-z0-9_-]{11})[^"]*"[^>]*><\/iframe>\s*<\/div>/g, _ = (e) => e.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+function H(e, o) {
+  const t = [...e.matchAll($)].map((s) => s[1]);
+  if (t.length < 2) return e;
+  const a = t.map(
+    (s, c) => `<div class="po-slider__slide"><a class="po-video" href="https://www.youtube.com/watch?v=${s}" data-po-video="${s}" target="_blank" rel="noopener" aria-label="${_(o.play)} ${c + 1}/${t.length}"><img src="https://i.ytimg.com/vi/${s}/hqdefault.jpg" alt="" loading="lazy" width="480" height="360" /><span class="po-video__play" aria-hidden="true"></span></a></div>`
+  ).join(""), r = `<div class="po-slider" data-po-slider data-label-close="${_(o.close)}"><div class="po-slider__viewport"><div class="po-slider__track">${a}</div></div><button type="button" class="po-slider__arrow po-slider__arrow--prev" data-po-prev aria-label="${_(o.prev)}"></button><button type="button" class="po-slider__arrow po-slider__arrow--next" data-po-next aria-label="${_(o.next)}"></button><div class="po-slider__dots" data-po-dots></div></div>`;
+  let p = !0;
+  return e.replace($, () => p ? (p = !1, r) : "");
+}
+function dn({ site: e, posts: o, staticPage: t, archivesLink: a }) {
+  var h;
+  const r = x(e.themeConfig), p = v(e), s = { prev: p("prev"), next: p("next"), play: p("play"), close: p("close") }, c = t ? cn(H(t.bodyHtml, s)) : [], m = (h = c.find((d) => d.id)) == null ? void 0 : h.id;
+  return /* @__PURE__ */ i(w, { children: [
     /* @__PURE__ */ i("section", { className: "po-hero", children: [
       r.hero.image && /* @__PURE__ */ n("div", { className: "po-hero__bg", "aria-hidden": "true", children: /* @__PURE__ */ n("img", { src: r.hero.image, alt: "" }) }),
       /* @__PURE__ */ i("div", { className: "po-hero__inner", children: [
-        /* @__PURE__ */ n("h1", { className: "po-hero__title", children: /* @__PURE__ */ n(O, { site: e, className: "po-hero__brand" }) }),
+        /* @__PURE__ */ n("h1", { className: "po-hero__title", children: /* @__PURE__ */ n(P, { site: e, className: "po-hero__brand" }) }),
         r.hero.tagline && /* @__PURE__ */ n("p", { className: "po-hero__tagline", children: r.hero.tagline })
       ] }),
-      /* @__PURE__ */ n("a", { className: "po-hero__down", href: d ? `#${d}` : "#po-content", "aria-label": c("scroll"), children: /* @__PURE__ */ n("span", { "aria-hidden": "true" }) })
+      /* @__PURE__ */ n("a", { className: "po-hero__down", href: m ? `#${m}` : "#po-content", "aria-label": p("scroll"), children: /* @__PURE__ */ n("span", { "aria-hidden": "true" }) })
     ] }),
-    /* @__PURE__ */ n("div", { id: "po-content", children: t ? l.map((p, h) => /* @__PURE__ */ i("section", { id: p.id, className: `po-section${p.background ? " po-section--photo" : h % 2 ? " po-section--alt" : ""}`, children: [
-      p.background && /* @__PURE__ */ n("div", { className: "po-bg", "aria-hidden": "true", dangerouslySetInnerHTML: { __html: p.background } }),
+    /* @__PURE__ */ n("div", { id: "po-content", children: t ? c.map((d, u) => /* @__PURE__ */ i("section", { id: d.id, className: `po-section${d.background ? " po-section--photo" : u % 2 ? " po-section--alt" : ""}`, children: [
+      d.background && /* @__PURE__ */ n("div", { className: "po-bg", "aria-hidden": "true", dangerouslySetInnerHTML: { __html: d.background } }),
       /* @__PURE__ */ i("div", { className: "po-container po-section__inner", children: [
-        p.heading && /* @__PURE__ */ n("h2", { className: "po-section__title", dangerouslySetInnerHTML: { __html: p.heading } }),
-        p.html && /* @__PURE__ */ n("div", { className: "po-prose", dangerouslySetInnerHTML: { __html: p.html } })
+        d.heading && /* @__PURE__ */ n("h2", { className: "po-section__title", dangerouslySetInnerHTML: { __html: d.heading } }),
+        d.html && /* @__PURE__ */ n("div", { className: "po-prose", dangerouslySetInnerHTML: { __html: d.html } })
       ] })
-    ] }, p.id ?? h)) : /* @__PURE__ */ n("section", { className: "po-section", children: /* @__PURE__ */ i("div", { className: "po-container po-section__inner", children: [
-      /* @__PURE__ */ n("h2", { className: "po-section__title", children: c("news") }),
-      /* @__PURE__ */ n(S, { posts: o, site: e }),
+    ] }, d.id ?? u)) : /* @__PURE__ */ n("section", { className: "po-section", children: /* @__PURE__ */ i("div", { className: "po-container po-section__inner", children: [
+      /* @__PURE__ */ n("h2", { className: "po-section__title", children: p("news") }),
+      /* @__PURE__ */ n(E, { posts: o, site: e }),
       a && /* @__PURE__ */ n("p", { className: "po-more", children: /* @__PURE__ */ n("a", { className: "po-button", href: a.href, children: a.label }) })
     ] }) }) })
   ] });
 }
-function _({ image: e, eyebrow: o, title: t, children: a }) {
+function k({ image: e, eyebrow: o, title: t, children: a }) {
   return /* @__PURE__ */ i("header", { className: `po-band${e ? " po-band--photo" : ""}`, children: [
     e && /* @__PURE__ */ n("div", { className: "po-bg", "aria-hidden": "true", children: /* @__PURE__ */ n("img", { src: e, alt: "" }) }),
     /* @__PURE__ */ i("div", { className: "po-container po-band__inner", children: [
@@ -1344,106 +1748,106 @@ function _({ image: e, eyebrow: o, title: t, children: a }) {
     ] })
   ] });
 }
-function pn({ site: e, post: o, bodyHtml: t, author: a, hero: r, primaryTerm: c, tags: l }) {
-  const d = k(r, "large"), m = o.type === "post", p = new Date($(o));
-  let h = "";
+function mn({ site: e, post: o, bodyHtml: t, author: a, hero: r, primaryTerm: p, tags: s }) {
+  const c = v(e), m = H(t, { prev: c("prev"), next: c("next"), play: c("play"), close: c("close") }), h = L(r, "large"), d = o.type === "post", u = new Date(I(o));
+  let y = "";
   try {
-    h = new Intl.DateTimeFormat(e.settings.language || "en", { dateStyle: "long" }).format(p);
+    y = new Intl.DateTimeFormat(e.settings.language || "en", { dateStyle: "long" }).format(u);
   } catch {
-    h = p.toDateString();
+    y = u.toDateString();
   }
   return /* @__PURE__ */ i("article", { className: "po-article", children: [
     /* @__PURE__ */ n(
-      _,
+      k,
       {
-        image: d || void 0,
+        image: h || void 0,
         title: o.title,
-        eyebrow: m && c ? /* @__PURE__ */ n("a", { className: "po-eyebrow", href: `/${U(c)}`, children: c.name }) : void 0,
-        children: m && /* @__PURE__ */ i("p", { className: "po-meta", children: [
-          a ? /* @__PURE__ */ i(y, { children: [
+        eyebrow: d && p ? /* @__PURE__ */ n("a", { className: "po-eyebrow", href: `/${q(p)}`, children: p.name }) : void 0,
+        children: d && /* @__PURE__ */ i("p", { className: "po-meta", children: [
+          a ? /* @__PURE__ */ i(w, { children: [
             a.url ? /* @__PURE__ */ n("a", { href: a.url, children: a.displayName }) : a.displayName,
             " · "
           ] }) : null,
-          /* @__PURE__ */ n("time", { dateTime: p.toISOString(), children: h })
+          /* @__PURE__ */ n("time", { dateTime: u.toISOString(), children: y })
         ] })
       }
     ),
     /* @__PURE__ */ i("div", { className: "po-container po-container--narrow po-article__body", children: [
       (r == null ? void 0 : r.caption) && /* @__PURE__ */ n("p", { className: "po-caption", children: r.caption }),
-      /* @__PURE__ */ n("div", { className: "po-prose", dangerouslySetInnerHTML: { __html: t } }),
-      m && l.length > 0 && /* @__PURE__ */ n("ul", { className: "po-tags", "aria-label": x(e)("tags"), children: l.map((v) => /* @__PURE__ */ i("li", { children: [
+      /* @__PURE__ */ n("div", { className: "po-prose", dangerouslySetInnerHTML: { __html: m } }),
+      d && s.length > 0 && /* @__PURE__ */ n("ul", { className: "po-tags", "aria-label": c("tags"), children: s.map((g) => /* @__PURE__ */ i("li", { children: [
         "#",
-        v.name
-      ] }, v.id)) })
+        g.name
+      ] }, g.id)) })
     ] })
   ] });
 }
-function cn({ site: e, term: o, posts: t, archivesLink: a }) {
-  return /* @__PURE__ */ i(y, { children: [
-    /* @__PURE__ */ n(_, { title: o.name, children: o.description && /* @__PURE__ */ n("p", { className: "po-lead", children: o.description }) }),
+function hn({ site: e, term: o, posts: t, archivesLink: a }) {
+  return /* @__PURE__ */ i(w, { children: [
+    /* @__PURE__ */ n(k, { title: o.name, children: o.description && /* @__PURE__ */ n("p", { className: "po-lead", children: o.description }) }),
     /* @__PURE__ */ i("div", { className: "po-container po-listing", children: [
-      /* @__PURE__ */ n(S, { posts: t, site: e }),
+      /* @__PURE__ */ n(E, { posts: t, site: e }),
       a && /* @__PURE__ */ n("p", { className: "po-more", children: /* @__PURE__ */ n("a", { className: "po-button", href: a.href, children: a.label }) })
     ] })
   ] });
 }
-function dn({ site: e, author: o, posts: t }) {
-  const a = k(o.avatar, "small");
-  return /* @__PURE__ */ i(y, { children: [
-    /* @__PURE__ */ i(_, { title: o.displayName, eyebrow: a ? /* @__PURE__ */ n("img", { className: "po-avatar", src: a, alt: "", width: 96, height: 96 }) : void 0, children: [
+function gn({ site: e, author: o, posts: t }) {
+  const a = L(o.avatar, "small");
+  return /* @__PURE__ */ i(w, { children: [
+    /* @__PURE__ */ i(k, { title: o.displayName, eyebrow: a ? /* @__PURE__ */ n("img", { className: "po-avatar", src: a, alt: "", width: 96, height: 96 }) : void 0, children: [
       o.title && /* @__PURE__ */ n("p", { className: "po-meta", children: o.title }),
       o.bio && /* @__PURE__ */ n("p", { className: "po-lead", children: o.bio }),
       o.socials && o.socials.length > 0 && /* @__PURE__ */ n("ul", { className: "po-author-links", children: o.socials.map((r) => /* @__PURE__ */ n("li", { children: /* @__PURE__ */ n("a", { href: r.url, rel: "me noopener", children: r.network }) }, r.network)) })
     ] }),
-    /* @__PURE__ */ n("div", { className: "po-container po-listing", children: /* @__PURE__ */ n(S, { posts: t, site: e }) })
+    /* @__PURE__ */ n("div", { className: "po-container po-listing", children: /* @__PURE__ */ n(E, { posts: t, site: e }) })
   ] });
 }
-function mn({ site: e, message: o }) {
-  const t = x(e);
-  return /* @__PURE__ */ i(_, { title: t("notFoundTitle"), children: [
+function un({ site: e, message: o }) {
+  const t = v(e);
+  return /* @__PURE__ */ i(k, { title: t("notFoundTitle"), children: [
     /* @__PURE__ */ n("p", { className: "po-lead", children: o ?? t("notFoundText") }),
     /* @__PURE__ */ n("p", { className: "po-more", children: /* @__PURE__ */ n("a", { className: "po-button", href: e.homePath ?? "/index.html", children: t("backHome") }) })
   ] });
 }
-function hn({ config: e, save: o }) {
-  const { t } = V("theme-pong-orchestra"), [a, r] = w(() => b(e)), [c, l] = w(!1), [d, m] = w(!1);
-  Y(() => r(b(e)), [e]);
-  async function p(s) {
-    l(!0);
+function fn({ config: e, save: o }) {
+  const { t } = W("theme-pong-orchestra"), [a, r] = N(() => x(e)), [p, s] = N(!1), [c, m] = N(!1);
+  X(() => r(x(e)), [e]);
+  async function h(l) {
+    s(!0);
     try {
-      await o(s), D.success(t("settings.saved"));
+      await o(l), K.success(t("settings.saved"));
     } finally {
-      l(!1);
+      s(!1);
     }
   }
-  async function h(s) {
-    s.preventDefault(), await p(a);
+  async function d(l) {
+    l.preventDefault(), await h(a);
   }
-  async function v(s) {
-    var A;
-    const g = (A = s.target.files) == null ? void 0 : A[0];
-    if (s.target.value = "", !g) return;
-    l(!0);
+  async function u(l) {
+    var C;
+    const f = (C = l.target.files) == null ? void 0 : C[0];
+    if (l.target.value = "", !f) return;
+    s(!0);
     try {
-      await q({ themeId: "pong-orchestra", file: g, width: 800, height: 400, fit: "contain" });
+      await V({ themeId: "pong-orchestra", file: f, width: 800, height: 400, fit: "contain" });
     } finally {
-      l(!1);
+      s(!1);
     }
-    const L = { ...a, logoEnabled: !0, logoUpdatedAt: Date.now() };
-    r(L), await p(L);
+    const S = { ...a, logoEnabled: !0, logoUpdatedAt: Date.now() };
+    r(S), await h(S);
   }
-  async function F() {
-    l(!0);
+  async function y() {
+    s(!0);
     try {
-      await G("pong-orchestra");
+      await Y("pong-orchestra");
     } finally {
-      l(!1);
+      s(!1);
     }
-    const s = { ...a, logoEnabled: !1, logoUpdatedAt: Date.now() };
-    r(s), await p(s);
+    const l = { ...a, logoEnabled: !1, logoUpdatedAt: Date.now() };
+    r(l), await h(l);
   }
-  const f = (s, g) => r({ ...a, [s]: { ...a[s], ...g } });
-  return /* @__PURE__ */ i("form", { onSubmit: h, "data-form-type": "other", className: "max-w-2xl space-y-6", children: [
+  const g = (l, f) => r({ ...a, [l]: { ...a[l], ...f } });
+  return /* @__PURE__ */ i("form", { onSubmit: d, "data-form-type": "other", className: "max-w-2xl space-y-6", children: [
     /* @__PURE__ */ n("h1", { className: "text-xl font-semibold", children: t("settings.title") }),
     /* @__PURE__ */ n("p", { className: "text-sm text-surface-500", children: t("settings.regenerateHint") }),
     /* @__PURE__ */ i("section", { className: "card p-4 space-y-3", children: [
@@ -1452,9 +1856,9 @@ function hn({ config: e, save: o }) {
       /* @__PURE__ */ i("div", { className: "flex items-center gap-3", children: [
         /* @__PURE__ */ i("label", { className: "btn-secondary", children: [
           /* @__PURE__ */ n("span", { children: t("settings.logoUpload") }),
-          /* @__PURE__ */ n("input", { type: "file", accept: "image/png,image/webp,image/jpeg,image/svg+xml", onChange: v, style: { display: "none" }, disabled: c })
+          /* @__PURE__ */ n("input", { type: "file", accept: "image/png,image/webp,image/jpeg,image/svg+xml", onChange: u, style: { display: "none" }, disabled: p })
         ] }),
-        /* @__PURE__ */ n("button", { type: "button", className: "btn-ghost", onClick: F, disabled: c || !a.logoEnabled, children: /* @__PURE__ */ n("span", { children: t("settings.logoRemove") }) })
+        /* @__PURE__ */ n("button", { type: "button", className: "btn-ghost", onClick: y, disabled: p || !a.logoEnabled, children: /* @__PURE__ */ n("span", { children: t("settings.logoRemove") }) })
       ] })
     ] }),
     /* @__PURE__ */ i("section", { className: "card p-4 space-y-3", children: [
@@ -1462,66 +1866,66 @@ function hn({ config: e, save: o }) {
       /* @__PURE__ */ i("label", { className: "block space-y-1", children: [
         /* @__PURE__ */ n("span", { className: "label", children: t("settings.heroImage") }),
         /* @__PURE__ */ i("div", { className: "flex items-center gap-2", children: [
-          /* @__PURE__ */ n("input", { className: "input w-full", type: "text", value: a.hero.image, onChange: (s) => f("hero", { image: s.target.value }), placeholder: "https://… / /media/…" }),
+          /* @__PURE__ */ n("input", { className: "input w-full", type: "text", value: a.hero.image, onChange: (l) => g("hero", { image: l.target.value }), placeholder: "https://… / /media/…" }),
           /* @__PURE__ */ n("button", { type: "button", className: "btn-secondary", onClick: () => m(!0), children: /* @__PURE__ */ n("span", { children: t("settings.pick") }) })
         ] })
       ] }),
       a.hero.image && /* @__PURE__ */ n("img", { src: a.hero.image, alt: "", style: { maxWidth: 320, maxHeight: 180, objectFit: "cover", borderRadius: 6 } }),
       /* @__PURE__ */ i("label", { className: "block space-y-1", children: [
         /* @__PURE__ */ n("span", { className: "label", children: t("settings.tagline") }),
-        /* @__PURE__ */ n("input", { className: "input w-full", type: "text", value: a.hero.tagline, onChange: (s) => f("hero", { tagline: s.target.value }) })
+        /* @__PURE__ */ n("input", { className: "input w-full", type: "text", value: a.hero.tagline, onChange: (l) => g("hero", { tagline: l.target.value }) })
       ] })
     ] }),
     /* @__PURE__ */ i("section", { className: "card p-4 space-y-3", children: [
       /* @__PURE__ */ n("h2", { className: "text-lg font-semibold", children: t("settings.socials") }),
-      M.map((s) => /* @__PURE__ */ i("label", { className: "block space-y-1", children: [
-        /* @__PURE__ */ n("span", { className: "label", children: N[s] }),
-        /* @__PURE__ */ n("input", { className: "input w-full", type: "url", value: a.socials[s], onChange: (g) => f("socials", { [s]: g.target.value }), placeholder: "https://…" })
-      ] }, s))
+      j.map((l) => /* @__PURE__ */ i("label", { className: "block space-y-1", children: [
+        /* @__PURE__ */ n("span", { className: "label", children: z[l] }),
+        /* @__PURE__ */ n("input", { className: "input w-full", type: "url", value: a.socials[l], onChange: (f) => g("socials", { [l]: f.target.value }), placeholder: "https://…" })
+      ] }, l))
     ] }),
     /* @__PURE__ */ i("section", { className: "card p-4 space-y-3", children: [
       /* @__PURE__ */ n("h2", { className: "text-lg font-semibold", children: t("settings.colors") }),
-      ["accent", "background", "text"].map((s) => /* @__PURE__ */ i("label", { className: "flex items-center justify-between gap-4", children: [
-        /* @__PURE__ */ n("span", { className: "text-sm", children: t(`settings.${s}`) }),
-        /* @__PURE__ */ n("input", { type: "color", value: a.colors[s], onChange: (g) => f("colors", { [s]: g.target.value }) })
-      ] }, s))
+      ["accent", "background", "text"].map((l) => /* @__PURE__ */ i("label", { className: "flex items-center justify-between gap-4", children: [
+        /* @__PURE__ */ n("span", { className: "text-sm", children: t(`settings.${l}`) }),
+        /* @__PURE__ */ n("input", { type: "color", value: a.colors[l], onChange: (f) => g("colors", { [l]: f.target.value }) })
+      ] }, l))
     ] }),
     /* @__PURE__ */ n("section", { className: "card p-4 space-y-3", children: /* @__PURE__ */ i("label", { className: "block space-y-1", children: [
       /* @__PURE__ */ n("span", { className: "label", children: t("settings.credit") }),
-      /* @__PURE__ */ n("input", { className: "input w-full", type: "text", value: a.footer.credit, onChange: (s) => f("footer", { credit: s.target.value }) })
+      /* @__PURE__ */ n("input", { className: "input w-full", type: "text", value: a.footer.credit, onChange: (l) => g("footer", { credit: l.target.value }) })
     ] }) }),
-    /* @__PURE__ */ n("button", { type: "submit", className: "btn-primary", disabled: c, children: /* @__PURE__ */ n("span", { children: t("settings.save") }) }),
-    d && /* @__PURE__ */ n(
-      I,
+    /* @__PURE__ */ n("button", { type: "submit", className: "btn-primary", disabled: p, children: /* @__PURE__ */ n("span", { children: t("settings.save") }) }),
+    c && /* @__PURE__ */ n(
+      D,
       {
         onClose: () => m(!1),
-        onPick: (s) => {
-          f("hero", { image: j(s, "large") }), m(!1);
+        onPick: (l) => {
+          g("hero", { image: G(l, "large") }), m(!1);
         }
       }
     )
   ] });
 }
-const gn = {
+const bn = {
   en: {
-    public: { menu: "Menu", mainNav: "Main", footerNav: "Footer", tags: "Tags", empty: "Nothing published yet.", notFoundTitle: "Page not found", notFoundText: "The page you are looking for does not exist or has moved.", backHome: "Back to the home page", by: "By", news: "News", scroll: "Scroll down", rights: "All rights reserved" },
+    public: { menu: "Menu", mainNav: "Main", footerNav: "Footer", tags: "Tags", empty: "Nothing published yet.", notFoundTitle: "Page not found", notFoundText: "The page you are looking for does not exist or has moved.", backHome: "Back to the home page", by: "By", news: "News", scroll: "Scroll down", rights: "All rights reserved", prev: "Previous", next: "Next", play: "Play video", close: "Close" },
     settings: { navLabel: "PONG Orchestra", title: "PONG Orchestra settings", accent: "Accent color", background: "Background", text: "Text color", save: "Save", saved: "Saved. Run Regenerate → All HTML to apply logo, photo and social links to every page.", regenerateHint: "Colors apply right away. Logo, hero photo, social links and footer are written into the pages: run Regenerate → All HTML after saving.", logo: "Logo", logoOn: "The uploaded logo replaces the site title in the header and the hero.", logoOff: "No logo: the site title is shown as a wordmark.", logoUpload: "Upload a logo", logoRemove: "Remove", hero: "Home hero", heroImage: "Background photo", pick: "Media library", tagline: "Tagline under the logo", socials: "Social networks", colors: "Colors", credit: "Extra footer line" }
   },
   fr: {
-    public: { menu: "Menu", mainNav: "Principal", footerNav: "Pied de page", tags: "Étiquettes", empty: "Rien de publié pour le moment.", notFoundTitle: "Page introuvable", notFoundText: "La page que vous cherchez n'existe pas ou a été déplacée.", backHome: "Retour à l'accueil", by: "Par", news: "Actualités", scroll: "Défiler vers le bas", rights: "Tous droits réservés" },
+    public: { menu: "Menu", mainNav: "Principal", footerNav: "Pied de page", tags: "Étiquettes", empty: "Rien de publié pour le moment.", notFoundTitle: "Page introuvable", notFoundText: "La page que vous cherchez n'existe pas ou a été déplacée.", backHome: "Retour à l'accueil", by: "Par", news: "Actualités", scroll: "Défiler vers le bas", rights: "Tous droits réservés", prev: "Précédent", next: "Suivant", play: "Lire la vidéo", close: "Fermer" },
     settings: { navLabel: "PONG Orchestra", title: "Réglages PONG Orchestra", accent: "Couleur d'accent", background: "Fond", text: "Couleur du texte", save: "Enregistrer", saved: "Enregistré. Lancez Régénérer → Tout le HTML pour appliquer logo, photo et réseaux à toutes les pages.", regenerateHint: "Les couleurs s'appliquent immédiatement. Logo, photo d'accueil, réseaux sociaux et pied de page sont écrits dans les pages : lancez Régénérer → Tout le HTML après avoir enregistré.", logo: "Logo", logoOn: "Le logo envoyé remplace le titre du site dans l'en-tête et l'accueil.", logoOff: "Pas de logo : le titre du site est affiché en texte.", logoUpload: "Envoyer un logo", logoRemove: "Retirer", hero: "Accueil plein écran", heroImage: "Photo de fond", pick: "Médiathèque", tagline: "Accroche sous le logo", socials: "Réseaux sociaux", colors: "Couleurs", credit: "Ligne supplémentaire du pied de page" }
   }
-}, vn = {
+}, wn = {
   id: "pong-orchestra",
   name: "PONG Orchestra",
-  version: "1.0.3",
+  version: "1.0.4",
   description: "Thème sombre type fanfare rock, inspiré de pongorchestra.fr",
-  readme: K,
+  readme: J,
   scssEntry: "theme.css",
-  cssText: C,
+  cssText: T,
   // Uploaded as theme-assets/pong-orchestra-menu.js; fills the menus from
   // data/menu.json so menu edits don't require regenerating every page.
-  jsText: J,
+  jsText: Z,
   // Image variants generated for every upload while this theme is active.
   imageFormats: {
     inputFormats: [".jpg", ".jpeg", ".png", ".webp", ".gif"],
@@ -1535,19 +1939,19 @@ const gn = {
     }
   },
   templates: {
-    base: on,
-    home: ln,
-    single: pn,
-    category: cn,
-    author: dn,
-    notFound: mn
+    base: rn,
+    home: dn,
+    single: mn,
+    category: hn,
+    author: gn,
+    notFound: un
   },
   // /theme-settings page; the saved config is baked into the uploaded CSS.
-  settings: { navLabelKey: "settings.navLabel", defaultConfig: u, component: hn, schema: W },
-  compileCss: (e) => Z(C, e),
+  settings: { navLabelKey: "settings.navLabel", defaultConfig: b, component: fn, schema: Q },
+  compileCss: (e) => nn(T, e),
   // Translations, namespace "theme-pong-orchestra" (admin UI + public labels).
-  i18n: gn
+  i18n: bn
 };
 export {
-  vn as default
+  wn as default
 };
