@@ -1030,13 +1030,19 @@ body.po {
   }
 }
 
-/* Spotify player: the full-size player (track list), like the official embed code. */
+/* Spotify player: tall player with the track list. */
 .po-prose .cms-embed-spotify {
-  height: 352px;
+  height: 480px;
   margin: 2rem auto 0;
   border-radius: 12px;
   overflow: hidden;
   background: transparent;
+}
+
+@media (max-width: 640px) {
+  .po-prose .cms-embed-spotify {
+    height: 420px;
+  }
 }
 `, J = `// PONG Orchestra — runtime menu loader, uploaded as theme-assets/pong-orchestra-menu.js.
 // Refreshes [data-cms-menu="header|footer"] from data/menu.json (the
@@ -1508,7 +1514,7 @@ const gn = {
 }, vn = {
   id: "pong-orchestra",
   name: "PONG Orchestra",
-  version: "1.0.2",
+  version: "1.0.3",
   description: "Thème sombre type fanfare rock, inspiré de pongorchestra.fr",
   readme: K,
   scssEntry: "theme.css",
