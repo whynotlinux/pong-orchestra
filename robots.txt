@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /pong-orchestra/admin/
+
+Sitemap: https://whynotlinux.github.io/pong-orchestra/sitemaps/sitemap-index.xml
