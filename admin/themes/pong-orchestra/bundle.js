@@ -1002,6 +1002,33 @@ body.po {
   color: #fff;
   text-decoration-thickness: 3px;
 }
+
+/* Several videos in a section: the first one large, the others two by two. */
+.po-section .po-prose:has(> .cms-embed + .cms-embed) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.po-section .po-prose:has(> .cms-embed + .cms-embed) > * {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.po-section .po-prose:has(> .cms-embed + .cms-embed) > .cms-embed ~ .cms-embed {
+  grid-column: auto;
+}
+
+.po-prose .cms-embed {
+  background: #000;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 640px) {
+  .po-section .po-prose:has(> .cms-embed + .cms-embed) > .cms-embed ~ .cms-embed {
+    grid-column: 1 / -1;
+  }
+}
 `, J = `// PONG Orchestra — runtime menu loader, uploaded as theme-assets/pong-orchestra-menu.js.
 // Refreshes [data-cms-menu="header|footer"] from data/menu.json (the
 // admin rewrites it whenever menus, posts or categories change) and
@@ -1472,7 +1499,7 @@ const gn = {
 }, vn = {
   id: "pong-orchestra",
   name: "PONG Orchestra",
-  version: "1.0.0",
+  version: "1.0.1",
   description: "Thème sombre type fanfare rock, inspiré de pongorchestra.fr",
   readme: K,
   scssEntry: "theme.css",
