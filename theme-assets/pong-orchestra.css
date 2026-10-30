@@ -998,3 +998,30 @@ body.po {
   color: #fff;
   text-decoration-thickness: 3px;
 }
+
+/* Several videos in a section: the first one large, the others two by two. */
+.po-section .po-prose:has(> .cms-embed + .cms-embed) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.po-section .po-prose:has(> .cms-embed + .cms-embed) > * {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.po-section .po-prose:has(> .cms-embed + .cms-embed) > .cms-embed ~ .cms-embed {
+  grid-column: auto;
+}
+
+.po-prose .cms-embed {
+  background: #000;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 640px) {
+  .po-section .po-prose:has(> .cms-embed + .cms-embed) > .cms-embed ~ .cms-embed {
+    grid-column: 1 / -1;
+  }
+}
